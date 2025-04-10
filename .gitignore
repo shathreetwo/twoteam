@@ -1,0 +1,16 @@
+# Build
+/target
+
+# IDE
+*.iml
+.idea/
+*.class
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# JARs
+*.jar

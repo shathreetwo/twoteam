@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css_team2/login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="/css_team2/nav.css">
+    <title>로그인</title>
+</head>
+
+<body>
+
+    <nav>
+        <div class="navLogo">
+            <a href="/main.html">
+                <div class="homeLogo"></div>
+            </a>
+        </div>
+
+        <div class="navTitle">
+            <ul>
+                <li>구매</li>
+                <li>Characters</li>
+                <li>지원</li>
+            </ul>
+        </div>
+
+        <div class="navBtn" id="navBtn">
+            <span class="material-symbols-outlined" id="bb">
+                menu
+            </span>
+        </div>
+
+        <div class="navBigBox navhidden" id="navBigBox">
+            <div class="navMenu1">
+                <ul>
+                    <li><a href="">Nintendo Switch OLED</a></li>
+                    <li><a href="">Nintendo Switch </a></li>
+                    <li><a href="">Nintendo Switch Lite</a></li>
+                    <li><a href="">Nintendo Switch OLED</a></li>
+                    <li><a href="">주변기기</a></li>
+                    <li><a href="/gamesaleList.html">게임 소프트웨어</a></li>
+                </ul>
+            </div>
+            <div class="navMenu2">
+
+                <ul class="navMenu2ul">
+                    <li>
+                        <a href="/character_3.html">
+                            <div class="limitBox">
+                                <div class="navMinBox" id="navMinBox1"></div>
+                            </div>
+                            <span>마리오</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/character_1.html">
+                            <div class="limitBox">
+                                <div class="navMinBox" id="navMinBox2"></div>
+                            </div>
+                            <span>젤다의 전설</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/character_2.html">
+                            <div class="limitBox">
+                                <div class="navMinBox" id="navMinBox3"></div>
+                            </div>
+                            <span>동물의 숲</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="navMenu2ul">
+                    <li>
+                        <a href="">
+                            <div class="limitBox">
+                                <div class="navMinBox" id="navMinBox4"></div>
+                            </div>
+                            <span>스플래툰</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="">
+                            <div class="limitBox">
+                                <div class="navMinBox" id="navMinBox5"></div>
+                            </div>
+                            <span>별의 커비</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="">
+                            <div class="limitBox">
+                                <div class="navMinBox" id="navMinBox6"></div>
+                            </div>
+                            <span>FireEmblem</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="navMenu3">
+                <ul>
+                    <li><a href="">마이페이지</a></li>
+                    <li><a href="/qnaBoard.html">문의사항 </a></li>
+                    <li><a href="/login.html">로그인</a></li>
+                </ul>
+            </div>
+        </div>
+
+
+    </nav>
+
+    </header>
+
+    <h3 id="mainText">닌텐도 로그인</h3>
+
+    <div>
+
+
+        <div id="loginBox">
+            <input id="id" type="text" placeholder="아이디">
+            <input id="password" type="text" placeholder="비밀번호">
+            <div class="check">
+                <input type="checkbox" value="자동로그인" id="자동로그인">
+                <label for="자동로그인">자동로그인</label>
+            </div>
+            <div class="login-btn">
+                <button id="logBtn">로그인</button>
+                <button id="joBtn">회원가입</button>
+            </div>
+            <div class="find">
+
+                <a href="" id="findId">아이디 찾기</a>
+                <a href="" id="findPw">비밀번호 찾기</a>
+            </div>
+        </div>
+
+        <img src="/img_team2/login_cha.png" id="bottom_p">
+
+
+    </div>
+
+    <footer>
+
+    </footer>
+    <script>
+        // 네비
+        document.getElementById('navBtn').addEventListener('click', () => {
+            document.getElementById('navBigBox').classList.toggle('navhidden');
+            document.getElementById('bb').classList.toggle('rocatei');
+        });
+
+        document.getElementById("logBtn").addEventListener("click", function () {
+        const username = document.getElementById("id").value;
+        const password = document.getElementById("password").value;
+
+        fetch("/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+        }).then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                alert("로그인 실패!");
+            }
+        });
+    });
+
+        // 🔽 회원가입 버튼 클릭 시 페이지 이동
+    document.getElementById("joBtn").addEventListener("click", function () {
+        window.location.href = "/sign.html";
+    });
+
+    </script>
+</body>
+
+</html>
