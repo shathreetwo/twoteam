@@ -7,6 +7,7 @@
     text-decoration: none;
 }
 
+
 html {
     min-width: 900px;
 }
@@ -27,6 +28,7 @@ a:active {
 }
 
 body {
+    margin: 0;
     font-family: 'Nunito', 'Pacifico', sans-serif;
 }
 nav{
