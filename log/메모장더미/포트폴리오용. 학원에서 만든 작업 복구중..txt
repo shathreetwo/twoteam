@@ -1,0 +1,111 @@
+포트폴리오용. 학원에서 만든 작업 복구중. 
+
+src/
+├── main/
+│   ├── java/com/yourproject/
+│   │   ├── controller/    ← 요청 처리
+│   │   ├── domain/        ← DB 테이블과 매핑되는 엔티티
+│   │   ├── repository/    ← DB 접근
+│   │   └── service/       ← 비즈니스 로직
+│   ├── resources/
+│   │   ├── static/        ← HTML, CSS, JS, 이미지 파일
+│   │   ├── templates/     ← JSP나 Thymeleaf 뷰
+│   │   └── application.properties
+
+ IntelliJ에서 한꺼번에 자동 변환하는 법
+1. Ctrl + Shift + R (Mac은 Cmd + Shift + R)
+IntelliJ에서 Replace in Path (전체 프로젝트에서 바꾸기)
+
+2. 📘 CSS 경로 바꾸기
+찾기 (정규식 사용 체크 ON):
+
+ini
+복사
+편집
+href="css_team2/
+바꾸기:
+
+ini
+복사
+편집
+href="/css_team2/
+
+와 진짜 다 바뀐다. 일일이 칠 생각이었는데 개조은 기능
+
+Spring Boot에서는 static과 templates 폴더가 정확히 다른 목적으로 쓰여. 정리해줄게!
+
+📁 static 폴더
+👉 src/main/resources/static/
+
+✅ 용도:
+정적 파일 (Static files) 보관하는 곳
+
+HTML에서 링크나 경로로 직접 접근하는 파일들
+
+✅ 예시:
+이미지: img.png
+
+CSS: style.css
+
+JS: script.js
+
+✅ URL에서 어떻게 불러올까?
+html
+복사
+편집
+<link rel="stylesheet" href="/css/style.css">
+<img src="/img/logo.png">
+📁 templates 폴더
+👉 src/main/resources/templates/
+
+✅ 용도:
+동적 페이지 (Dynamic pages) 템플릿 보관하는 곳
+
+Thymeleaf 같은 템플릿 엔진이 이걸 사용해서 HTML 생성
+
+서버에서 데이터를 전달해 렌더링된 HTML을 생성함
+
+✅ 어떤 경우에 사용?
+로그인 결과를 보여주는 페이지
+
+게시판 목록, 상세 페이지 등 DB 정보가 들어가는 페이지
+
+✅ URL로 직접 접근 가능?
+❌ X — 템플릿은 서버가 Controller에서 렌더링해서 응답해야 볼 수 있어.
+
+java
+복사
+편집
+@GetMapping("/login")
+public String loginPage() {
+    return "login"; // templates/login.html 을 렌더링함
+}
+🧠 정리
+구분	static	templates
+역할	정적 자원 (CSS, JS, 이미지)	동적 웹 페이지 (Thymeleaf 등)
+사용 대상	HTML에서 직접 불러오는 리소스	컨트롤러에서 렌더링되는 HTML
+URL 접근	가능 (/css/style.css)	불가능 (컨트롤러 필요)
+✅ 결론
+네가 만든 기존 HTML은 그냥 보여주기만 한다면 static에 놔도 돼.
+
+로그인/회원가입처럼 데이터가 필요한 페이지는 templates로 옮겨야 해.
+
+
+❓추가 설명: 언제 th:href 쓰는 거야?
+내부 정적 리소스(/static/ 폴더 아래 파일): th:href="@{/css/style.css}"
+
+외부 CDN 경로: 그냥 href="https://..."
+
+Spring Boot는 resources/static/ 아래에 있는 파일은 자동으로 정적 리소스로 인식해서
+타임리프 없이 그냥 보여줘.
+
+ 🔍 그럼 너는 HTML 파일을 브라우저 아이콘 눌러서 정적 페이지처럼 열어보고 있었구나!
+그 방식은 Spring Boot 서버를 안 띄운 상태라서 백엔드 기능(로그인 처리 등)은 절대 작동 안 해.
+
+✅ Spring Boot 제대로 실행하려면?
+HTML만 열면 백엔드 서버는 전혀 실행되지 않아. 반드시 Java 코드에서 서버를 실행해야 해.
+
+✔️ 1. @SpringBootApplication이 붙은 클래스 찾기
+src/main/java/... 경로 아래에 보통 Application.java 같은 클래스가 있어.
+
+배경 패턴의 이미지 크기를 줄이니 깜빡임이 훨씬 덜하다.

@@ -1,5 +1,0 @@
-[Version 3]
-- character_1.html의 CSS, JS 경로 대소문자 수정
-- saleDetail1~9.html의 CSS, JS 경로 대소문자 수정
-- AWS 배포 후 레이아웃 축소 현상 수정
-- 디자인 깨짐 이슈 확인 및 반영

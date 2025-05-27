@@ -1,0 +1,120 @@
+Apache → Spring Boot 리버스 프록시 설정
+
+Spring Boot 애플리케이션 앞단에 Apache 웹 서버를 구성
+
+전체 목표 아키텍처
+인터넷 → Apache (80, 443 포트) → Spring Boot (8080 포트) → MySQL
+
+1. Apache 설치 (Ubuntu 기준)
+sudo apt update
+sudo apt install apache2
+
+sudo systemctl status apache2 (동작여부확인)
+
+[Apache → Spring Boot 리버스 프록시 설정
+Apache가 외부 요청을 받아서 내부의 Spring Boot 애플리케이션(8080 포트)로 전달하게 만듭니다.]
+2. proxy 모듈 활성화
+
+sudo a2enmod proxy
+sudo a2enmod proxy_http
+
+사이트 설정 파일 열기:
+sudo nano /etc/apache2/sites-available/000-default.conf
+
+<VirtualHost *:80> 아래에 다음을 추가:
+ProxyPass / http://localhost:8080/
+ProxyPassReverse / http://localhost:8080/
+
+Apache 재시작:
+sudo systemctl restart apache2
+
+스프링부트 실행
+nohup java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties >/dev/null 2>&1 &
+
+브라우저 접속
+http://3.20.199.113:8080/
+이상없음. 
+
+------
+
+AWS WAF는 Application Load Balancer(ALB), API Gateway, 또는 CloudFront에서만 직접 사용할 수 있기 때문에 EC2의 Apache에 직접 적용할 수는 없습니다. 대신 아래처럼 대체하거나 실습할 수 있는 방법이 있습니다:
+
+1. 웹 방화벽(WAF) 모의 설정 및 차단 규칙 실험
+Apache에 ModSecurity라는 오픈소스 웹 방화벽 모듈을 설치하고 OWASP Core Rule Set을 적용하면, WAF처럼 동작하는 보안 필터를 EC2에서 실험할 수 있습니다.
+
+설치 및 적용
+sudo apt install libapache2-mod-security2
+sudo a2enmod security2
+
+OWASP Core Rule Set(CRS) 적용:
+cd /etc/modsecurity
+sudo mv modsecurity.conf-recommended modsecurity.conf
+sudo nano modsecurity.conf
+SecRuleEngine을 DetectionOnly → On으로 변경
+
+(DetectionOnly 모드 "차단하지 않고 기록만"
+SecRuleEngine On은 차단 모드)
+
+CRS 다운:
+cd /etc/apache2/modsecurity.d/
+sudo git clone https://github.com/coreruleset/coreruleset.git
+sudo cp coreruleset/crs-setup.conf.example coreruleset/crs-setup.conf
+
+/etc/apache2/modsecurity.d/include.conf 파일 생성 및 다음 추가:
+IncludeOptional modsecurity.d/coreruleset/crs-setup.conf
+IncludeOptional modsecurity.d/coreruleset/rules/*.conf
+
+Apache 재시작:
+sudo systemctl restart apache2
+
+
+-----
+
+Apache 보안 설정 항목
+
+
+-----
+
+방화벽 및 포트 스캐닝 대응
+ufw 사용해서 Apache(80, 443) 외 포트 차단:
+
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw allow 22
+sudo ufw enable
+
+sudo ufw status(확인)
+
+결과 : 
+Status: active
+
+To                         Action      From
+--                         ------      ----
+80                         ALLOW       Anywhere
+443                        ALLOW       Anywhere
+22                         ALLOW       Anywhere
+80 (v6)                    ALLOW       Anywhere (v6)
+443 (v6)                   ALLOW       Anywhere (v6)
+22 (v6)                    ALLOW       Anywhere (v6)
+
+아니 한참 해맸네
+8080안열었잖아.
+
+
+[포트 스캐닝 탐지 (능동 대응하고 싶다면)
+ufw는 기본적으로 포트를 차단할 뿐, 스캐닝을 탐지하거나 경고하진 않습니다.
+좀 더 고급 보안 설정을 원하면 아래를 고려하세요:
+
+🔹 [Fail2Ban] 설치 (SSH, Apache 공격 시도 차단)
+bash
+복사
+편집
+sudo apt install fail2ban
+포트 스캐너, SSH 무차별 로그인 시도 등 감지해서 자동 차단
+
+🔹 [ModSecurity에 포트 스캐닝 룰 추가]
+포트 스캐닝은 HTTP 레벨에서는 잘 감지되지 않지만, WAF로도 일부 대응 가능
+(예: 같은 IP가 1초 안에 30개 이상의 경로 접근 시 차단)
+]
+
+-----

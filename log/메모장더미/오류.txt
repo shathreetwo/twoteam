@@ -1,0 +1,61 @@
+문제 요약
+saleDetail.js 파일이 404 에러로 로드되지 않아서 디자인이나 동작이 제대로 안 되는 상황.
+
+📌 문제의 원인
+Refused to execute script from 'http://3.20.199.113:8080/JS_team2/saleDetail.js' 
+because its MIME type ('application/json') is not executable
+즉,
+
+브라우저가 이 파일을 자바스크립트(script) 로 실행하려는데,
+
+서버가 이 파일을 JSON으로 잘못 보냄
+=> 그래서 브라우저가 거부함 ❌
+
+HTML 코드에서 스크립트 경로는 이렇게 되어 있어야 함:
+
+
+<script src="/JS_team2/saleDetail.js"></script>
+※ src="JS_team2/saleDetail.js" → 현재 경로 기준 상대경로라서 깨질 수 있음.
+앞에 / 붙여서 절대경로로 설정하면 더 안전함!
+
+이 문제는 아님. 정상 출력 되는 페이지들을 보면 상대경로로 설정되어 있음. 
+
+    <link rel="stylesheet" href="css_team2/nav.css">
+    <link rel="stylesheet" href="CSS_team2/character_1.css">
+
+Refused to apply style from 'http://3.20.199.113:8080/CSS_team2/character_1.css' 
+because its MIME type ('application/json') is not a supported stylesheet MIME type
+
+
+문제인 부분을 찾았다. 
+경로가 대문자 
+여기서 테스트할땐 문제없이 찾았지만 패키징해서 aws에서 실행할때는 못찾는듯. 
+
+로그인페이지 : 이상무 f12 콘솔로 볼때 큰 오류는 없으나 aws에서 띄운 페이지는 글자크기같은게 좀 작게 나옴. 
+
+문의사항 : css 오류인가했는데 원래도 이러네. 크기 작아진거 빼고는 오류없음.  
+
+회원가입 : 크기가 전체적으로 작아진건 다 그런거같으니 생략. 오류없음. 
+
+게임판매리스트 : 오류없음. 
+
+게임 디테일 : 오류있음. 터치하면 그림 바뀌는 이벤트 작동 안됨. 
+css, js 경로가 대문자로 잘못설정되 있었음.
+수정 완료. 
+
+ 캐릭터 1 : 2,3은 이상없고 캐릭터 1 페이지 부분이 완전 작살나있음.  
+css, js 경로가 대문자로 잘못설정되 있었음.
+수정 완료. 
+
+
+작아지는 문제 
+ 가장 흔한 원인: 뷰포트 메타 태그 누락
+서버에 올라간 HTML 상단에 이게 빠져 있으면 모바일 뷰나 해상도에서 비정상적으로 작게 보일 수 있어.
+해결했다. 
+브라우저 줌이 걸려있어서 aws 거는 85%로 보고있었음.  
+
+<!-- 이거 꼭 있어야 해! -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+있는데...?
+이 문제는 아닌듯 하다. 
+

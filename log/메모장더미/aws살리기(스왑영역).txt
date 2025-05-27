@@ -1,0 +1,28 @@
+ubuntu@ip-172-31-10-96:~$  sudo dd if=/dev/zero of=/swapMem bs=128M count=16
+
+
+]
+dd: error writing '/swapMem': No space left on device
+15+0 records in
+14+0 records out
+1911988224 bytes (1.9 GB, 1.8 GiB) copied, 99.9326 s, 19.1 MB/s
+ubuntu@ip-172-31-10-96:~$ ls
+application-aws.properties  demo-0.0.1-SNAPSHOT.jar  log.txt  log_2025-04-20.txt  nohup.out  start.sh
+ubuntu@ip-172-31-10-96:~$ touch /swapMem
+touch: cannot touch '/swapMem': Permission denied
+ubuntu@ip-172-31-10-96:~$ sudo dd if=/dev/zero of=/swapfile bs=128M count=8
+8+0 records in
+8+0 records out
+1073741824 bytes (1.1 GB, 1.0 GiB) copied, 50.988 s, 21.1 MB/s
+ubuntu@ip-172-31-10-96:~$ sudo chmod 600 /swapMem
+ubuntu@ip-172-31-10-96:~$ sudo mkswap /swapMem
+Setting up swapspace version 1, size = 1.8 GiB (1911984128 bytes)
+no label, UUID=f3934a04-83dc-4715-9e23-70de5d07afe6
+ubuntu@ip-172-31-10-96:~$ sudo swapon /swapMem
+ubuntu@ip-172-31-10-96:~$ sudo swapon --show
+NAME     TYPE SIZE USED PRIO
+/swapMem file 1.8G   0B   -2
+ubuntu@ip-172-31-10-96:~$ 
+
+메모리부족으로 터지지않게 스왑파일을 만들어줬다. 
+2기가는 용량부족떠서 1기가로 만듬.

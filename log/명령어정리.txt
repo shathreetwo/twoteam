@@ -1,0 +1,63 @@
+1. ec2 접속
+
+key 위치에서
+ssh -i "spring-key.pem" ubuntu@ec2-3-20-199-113.us-east-2.compute.amazonaws.com
+
+2. 웹서버, mysql 실행
+nohup java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties >/dev/null 2>&1 &
+sudo systemctl start mysql
+
+(
+> log.txt 2>&1	로그를 log.txt 파일로 저장
+>/dev/null 2>&1	로그를 버림 (기록 X, 성능↑)
+)
+
+3. 상태확인 
+sudo systemctl status mysql
+
+4. 홈페이지 접속 주소
+http://3.20.199.113:8080/
+
+5. 실행중인 프로세스 표시, 종료.
+ps aux | grep demo-0.0.1-SNAPSHOT.jar
+
+(
+ps aux는 현재 실행 중인 모든 프로세스를 표시하고,
+grep demo-0.0.1-SNAPSHOT.jar는 그 중에서 실행 중인 demo-0.0.1-SNAPSHOT.jar 찾기
+)
+
+kill -9 프로세스id
+
+(-9 옵션은 강제 종료 옵션)
+
+
+-----버전업 가이드-----
+서버에서 
+기존 실행중인 jar 서비스 종료
+ps -ef | grep java
+pid 확인하고 
+ps -ef | grep java
+프로세스 종료
+rm demo-0.0.1-SNAPSHOT.jar
+기존 jar 제거
+
+내 컴퓨터에서 
+스프링 프로젝트 pom.xml있는 경로에서
+mvn clean package
+jar 파일 생성
+키있는 위치에서
+scp -i spring-key.pem demo/target/demo-0.0.1-SNAPSHOT.jar ubuntu@3.20.199.113:~
+서버로 jar파일 보내기
+
+jar파일 받으면 
+nohup java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties > log_$(date +%F).txt 2>&1 &
+jar 서비스 실행
+
+
+구성 | 설명
+nohup | 터미널을 종료해도 프로세스가 계속 실행되게 함
+java -jar demo-0.0.1-SNAPSHOT.jar | JAR 파일 실행
+--spring.config.location=... | 스프링 부트 설정 파일 지정 (외부 properties 파일 사용)
+> log_$(date +%F).txt | 출력 로그를 날짜 형식으로 된 파일에 저장 (예: log_2025-04-14.txt)
+2>&1 | 에러 출력도 동일한 로그 파일에 저장
+& | 백그라운드 실행

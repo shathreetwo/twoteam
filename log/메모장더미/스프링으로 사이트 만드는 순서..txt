@@ -1,0 +1,952 @@
+스프링으로 사이트 만드는 순서.
+
+1. 스프링 이니셜라이져 사이트에서 스프링 초기설정 완료된 파일 다운받기.
+2. 그걸 인텔리j에서 오픈
+3. 경로에 맞게 css,img, js,html같은건 리소스 스태틱쪽에, 
+백엔드 관련은 메인 자바 프로젝트명폴더 쪽에 컨트롤러, 도메인, 리포지터리, 서비스 만들어서 백엔드 프로그래밍. 
+
+4. 잘 설정해서 만들면 해결. 자세한건 gpt한테 물어보셈. 
+
+
+팁
+
+Spring Boot에서는 resources/static 안의 파일들은 /로 시작하면 무조건 static 기준 경로에서 찾게 돼.
+
+http://localhost:8080/login.html
+
+
+문제 생김. 비번 암호화하는기능 넣고 난 뒤로 
+
+지금 이 페이지가 작동하지 않습니다.
+localhost 너무 여러 번 리디렉션되었습니다.
+가 발생함. 
+
+SecurityConfig 안에서 이미 .loginProcessingUrl("/login") 설정했잖아?
+
+이건 "POST /login 요청은 Spring Security가 알아서 처리한다"는 뜻이야.
+
+그런데 너 컨트롤러에서도 POST /login을 또 처리하려 하니까 충돌이 나고, 무한 리디렉션 오류가 생기는 거야.
+
+항목	경로	설명
+로그인 페이지 보여주기	/login (GET)	사용자가 처음 로그인 페이지 접근할 때 (컨트롤러에서 처리)
+로그인 처리	/login (POST)	사용자가 로그인 버튼 눌렀을 때 (Spring Security가 처리)
+
+해결완료. 
+
+로그인 회원가입 버튼 css 적용안됨.
+
+해결완료.
+
+로그인 화면에서 버튼을 눌러도 아무일도 안일어남. 
+
+원인: <button> 안에 <a> 태그가 들어가 있음
+HTML에서는 <button><a href=...></a></button> 구조를 사용할 경우,
+브라우저마다 동작이 불안정하고 href 링크가 무시되는 경우도 있어.
+
+아니었음. 고쳐도 해결안댐. 
+
+주소 입력해봤는데 http://localhost:8080/sign_main.html 이 주소로 들어가도 로그인 페이지가 나옴. 
+
+스프링 시큐리티를 쓰면 
+다른 html들이 보호되서 로그인안하면 무조건 로그인페이지가 뜬다? 
+
+            .requestMatchers(
+                "/login", 
+                "/login.html", 
+                "/register", 
+                "/sign_main.html", // ✅ 추가!
+                "/css_team2/**", 
+                "/js_team2/**", 
+                "/img_team2/**"
+            ).permitAll()
+
+해결완료.
+
+경로 대소문자 구분 할것.
+
+회원가입할때 회원가입이 안됨. 
+
+UserController는 기본적으로 회원가입 요청을 처리하는 @PostMapping("/register") 메소드가 있습니다. 
+이 메소드에서 UserService의 registerUser 메소드를 호출하고 결과에 따라 "회원가입 성공" 또는 "아이디 중복"을 반환하고 있습니다.
+
+f12로 네트워크를 보니 http://localhost:8080/api/register 에서 302found로 막힘.
+
+HTTP 상태 코드 302 Found는 요청한 URL이 임시적으로 다른 위치로 리다이렉션되었음을 나타냅니다. 이 오류는 보통 로그인이나 인증 관련 요청에서 자주 발생하는데, 이유는 인증되지 않은 사용자가 인증을 요구하는 리소스에 접근하려 할 때 발생할 수 있습니다.
+
+/api/register로 POST 요청을 보낼 때 302 상태 코드가 발생하는 이유는 아마도 인증이 필요한 페이지에 접근하려고 해서 리다이렉션이 일어났기 때문일 수 있습니다.
+
+"/api/register"를 스프링 시큐리티 설정 파일에 허용으로 추가.
+permitAll()로 설정해 주면 인증 없이도 접근할 수 있게 됩니다.
+
+회원가입 성공 뜸. 
+
+갑자기 접속안됨. 
+로그인화면 들어가도 static에서 찾고 있다나? 
+컨트롤러 @GetMapping("/login")을 @GetMapping("/login.html")으로 바꾸니까 해결 된거같음.
+
+회원가입은 성공. 
+db에도 제대로 들어감. 
+
+로그인하니까 또 오류창뜨네
+오류 로그보니까 로그인은 잘됬는데 로그인하고 창바뀌는 과정에서 /로 이동됬다는거같다.  
+
+Spring Boot는 src/main/resources/static/ 디렉토리에 index.html이 있으면 / 요청 시 자동으로 그 파일을 반환해.
+
+일단 index.html만들어서 테스트 해보고 
+경로코드 찾아서 로그인 성공시 제대로된 경로로 이동시키자.
+
+로그인 성공하니까 index.html로 잘 이동된다.
+
+static 아레에 main.html이 있는데 그냥 main으로 경로를 잡아도 되는건가?
+
+
+ChatGPT의 말:
+좋은 질문이야!
+static 아래에 main.html이 있을 경우엔 Spring Boot가 자동으로 정적 리소스로 처리하기 때문에 컨트롤러 없이도 접근은 가능하지만, 경로 설정에는 약간 주의가 필요해.
+
+🔹 정적 리소스(static)의 경로 규칙
+Spring Boot는 src/main/resources/static 아래의 파일을
+자동으로 /부터 시작하는 URL로 서빙해.
+
+예를 들어:
+
+static/main.html → 브라우저에서 접속하려면 /main.html
+
+static/js_team2/test.js → /js_team2/test.js
+
+✅ 그래서 /main으로 접근할 수 있을까?
+❌ 안됨:
+/main → 해당 URL은 main.html을 찾지 못해 404가 뜰 수 있어.
+
+✅ 이렇게 하면 됨:
+.defaultSuccessUrl("/main.html", true)
+처럼 확장자까지 붙여야 정확히 접근 가능해.
+
+
+좋아 이정도면 복원 완료다.!
+
+Spring Boot는 기본적으로 @SpringBootApplication이 선언된 클래스의 하위 패키지 전체를 스캔해.
+그래서 해당 클래스 기준으로 하위 패키지에 컨트롤러를 두면 전부 인식돼.
+
+컨트롤러로 인식되려면?
+클래스에 @Controller 또는 @RestController 어노테이션이 있어야 해.
+
+어노테이션	설명
+@Controller	HTML 같은 템플릿(.html, .jsp 등)을 반환할 때 사용 (보통 templates/, static/ 폴더랑 연결)
+@RestController	데이터를 그대로 응답할 때 사용 (예: JSON API 만들 때) → @Controller + @ResponseBody의 조합
+
+ Spring은 내부적으로 어떻게 인식하냐면?
+Spring은 프로젝트 시작할 때 @Component나 @Controller, @Service, @Repository 같은 어노테이션이 붙은 클래스를 자동으로 찾아서 스프링 컨테이너에 등록해.
+
+그래서 @Controller가 붙어 있으면
+👉 "아~ 이건 웹 요청을 처리할 컨트롤러구나!" 하고 인식하는 거야.
+
+깃허브 백업하고 -> aws로 서비스해보고 -> 포폴에 넣기. -> 취업전선 투입. -> 동시에 게임개발 마저 진행
+
+aws가입
+
+askpig@naver.com
+4422ikyg!@
+
+가입할때 신용카드 필요하다해서 당황했는데 
+전에 일본갈때 만든 카드로도 되더라. 
+
+aws 인스턴스 만들고, 스프링 프로젝트 jar로 만들어서 jar파일 aws로 보냈다. 
+aws에서 실행하니 db없어서 실행안되고 죽음.
+
+mysql 설치하고 db랑 사용자 만듬. 
+game_db에 사용자는 new_user, password
+mysql 안깔려있다고 외부접속 안되길래 워크벤치 깔아서 gui로 연결했다. 
+깔았는데 아마 패스가 안되있는듯. 어쨌든 워크밴치로 연결했으니 ㄱㅊ
+
+이제 바뀐 db정보를 웹설정파일에 넣고 외부에서 웹사이트 접속을 시도해 봐야지
+
+http://3.133.120.249:8080/
+
+성공. 회원가입도 잘되고 로그인도 잘된다! 
+좋아!
+
+aws ec2 인스턴스만들때 포트 열어줘야 원격접속 가능.
+
+-----내가 aws에서 작업한거 -----
+
+인스턴스 생성할때 받은 키 위치에서 
+ssh -i "spring-key.pem" ubuntu@ec2-3-133-120-249.us-east-2.compute.amazonaws.com
+로 aws 접속. 
+
+로컬에서 내가 작업한 스프링 프로젝트 폴더 안 루트 디렉터리(= pom.xml 있는 폴더)에서:
+mvn clean package
+빌드하면 -> 타겟폴더에 jar로 패키징된 파일 하나 나옴. 
+
+scp -i spring-key.pem demo/target/demo-0.0.1-SNAPSHOT.jar ubuntu@3.133.120.249:~
+이걸로 빌드한 jar파일을 aws로 보냄. 
+
+aws에서 (우분투) 
+sudo apt update
+sudo apt install openjdk-17-jre-headless
+
+자바 11 설치했었는데 버전이 낮다 떠서 17 설치함. 
+
+스프링 부트 웹서버 실행. 
+
+nohup java -jar demo-0.0.1-SNAPSHOT.jar > log.txt 2>&1 &
+이 명령어는:
+
+nohup: 로그아웃해도 서버 유지
+
+> log.txt: 실행 로그를 log.txt에 저장
+
+2>&1: 에러 로그도 같이 저장
+
+&: 백그라운드 실행.
+
+ps aux | grep java
+Spring Boot 서버가 진짜로 실행 중인지 확인
+
+tail -n 50 log.txt
+로그 확인.
+
+Caused by: org.hibernate.HibernateException: Unable to determine Dialect without JDBC metadata (please set 'jakarta.persistence.jdbc.url' for common cases or 'hibernate.dialect' when a custom Dialect implementation must be provided)
+
+Spring Boot 애플리케이션이 실행 중 데이터베이스 설정을 찾을 수 없어서 Hibernate가 어떤 SQL 방언(dialect)을 써야 할지 몰라서 죽은 거야.
+application.properties 또는 application.yml 파일에 데이터베이스 설정이 빠졌거나, EC2에서 접근 가능한 DB가 없어서 그래.
+
+
+mysql 설치 
+sudo apt update
+sudo apt install mysql-server -y
+
+상태확인
+sudo systemctl status mysql
+실행 안 되어 있으면:
+sudo systemctl start mysql
+
+sudo mysql_secure_installation
+이거는 root 비밀번호 설정하고, 원격 접속 제한 등 설정할 수 있어.
+
+sudo mysql
+접속되면, 아래처럼 DB와 사용자 만들어줘:
+
+
+CREATE DATABASE demo_db;
+CREATE USER 'new_user'@'%' IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON demo_db.* TO 'demo_user'@'%';
+FLUSH PRIVILEGES;
+EXIT;
+
+외부 접속 허용 (Spring에서 접속할 수 있도록)
+설정 파일 열기:
+
+bash
+복사
+편집
+sudo nano /etc/mysql/mysql.conf.d/mysqld.cnf
+bind-address = 127.0.0.1 → 0.0.0.0 으로 변경
+
+저장 후 MySQL 재시작:
+
+sudo systemctl restart mysql
+
+EC2 보안 그룹에서 3306 포트 열기
+AWS EC2 콘솔 > 보안 그룹 > 인바운드 규칙
+
+3306 포트를 현재 접속 중인 IP로 열어줘 (My IP 선택)
+
+웹에서 쓰는 db랑 테이블 2개 만들고 
+
+CREATE DATABASE game_db CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+-- `users` 테이블 생성 (비밀번호는 해시 형태로 저장)
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,   -- 비밀번호는 해시 형태로 저장
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    email VARCHAR(255) NOT NULL,
+    nickname VARCHAR(255) NOT NULL
+);
+
+-- `users_plain` 테이블 생성 (비밀번호를 평문으로 저장)
+CREATE TABLE users_plain (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    nickname VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,  -- 평문 비밀번호
+    username VARCHAR(255) NOT NULL
+);
+
+jar안에 있는 파일이라 압축해제하고 수정하고 다시 압축해야 하지만 귀찮아서 그냥 외부 설정파일을 따로 만들었다. 
+
+ # MySQL 연결 설정
+spring.datasource.url=jdbc:mysql://<AWS_MYSQL_HOST>:3306/game_db
+spring.datasource.username=new_user
+spring.datasource.password=password
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# Hibernate 설정 (JPA)
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+
+# 서버 포트 설정 (선택 사항)
+server.port=8080
+
+nano application-aws.properties
+# 붙여넣고 저장: Ctrl + O → Enter → Ctrl + X
+
+nano는 첨써봐서 살짝 헤맸다. 
+:wq했는데 안되더라고. 전혀다른 텍스트에디터인줄은 몰랐지.
+
+java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties
+외부 설정파일 사용해서 웹서버 실행. 
+
+http://3.133.120.249:8080/
+
+-------내가 쓰는 aws 프리티어 요금 ------
+
+✅ AWS 프리 티어 요금 기준 (2025 기준)
+항목	프리 티어 제공량
+EC2	t2.micro 또는 t3.micro 인스턴스 1대 (월 750시간)
+EBS (스토리지)	30GB 까지 무료 (루트 볼륨 + 추가 볼륨 포함)
+데이터 전송	월 15GB 까지 무료 (외부로 나가는 트래픽)
+MySQL (RDS)	RDS도 따로 프리티어 제공, 단 EC2 직접 설치는 해당 안 됨
+✅ 참고: 프리 티어는 가입 후 12개월 동안 제공되며, 시간 단위로 계산됨.
+✅ EC2를 24시간 돌리면 월 750시간 내에서 1대만 무료!
+
+💡 프리 티어에서 요금 발생하는 상황
+요금 발생 원인	설명
+t2.micro가 아닌 인스턴스 사용	예: t2.small, t3.medium 등은 프리티어 아님
+EC2 2개 이상 동시에 사용	초과한 인스턴스는 유료
+EBS가 30GB를 초과	초과한 디스크 용량만큼 과금
+트래픽이 월 15GB 초과	외부로 나가는 데이터 기준
+프리 티어 12개월이 지남	이후에는 모두 유료 전환
+
+
+-----항상 켜두는 법 -----
+✅ EC2 서버 반영구적으로 켜두는 법 (Spring Boot 웹 서버 포함)
+1. 백그라운드 실행으로 JAR 실행하기
+SSH 접속 상태를 유지하지 않고도 서버가 계속 켜지려면:
+
+bash
+복사
+편집
+nohup java -jar your-app.jar > log.txt 2>&1 &
+nohup: SSH 종료 후에도 프로세스를 유지시킴
+
+your-app.jar: 너의 Spring Boot JAR 파일 이름
+
+log.txt: 출력 로그 파일
+
+&: 백그라운드 실행
+
+👉 이제 터미널을 닫아도 서버는 계속 동작해!
+
+2. 서버 재부팅 시에도 자동 실행하고 싶다면?
+(1) shell 스크립트 작성
+start.sh 같은 파일을 하나 만들어:
+
+bash
+복사
+편집
+#!/bin/bash
+cd /home/ubuntu/your-app-folder
+nohup java -jar your-app.jar > log.txt 2>&1 &
+your-app-folder는 JAR 파일이 있는 디렉토리로 바꿔줘
+
+(2) 실행 권한 부여
+bash
+복사
+편집
+chmod +x start.sh
+(3) crontab에 등록 (부팅 시 자동 실행)
+bash
+복사
+편집
+crontab -e
+맨 아래에 추가:
+
+bash
+복사
+편집
+@reboot /home/ubuntu/your-app-folder/start.sh
+3. 서버 상태 확인 및 종료 방법
+실행 중인 Java 프로세스 확인:
+
+bash
+복사
+편집
+ps aux | grep java
+강제 종료:
+
+bash
+복사
+편집
+kill -9 [PID]
+🎯 요약
+목적	방법
+터미널 닫아도 계속 실행	nohup java -jar ... &
+재부팅해도 자동 실행	crontab + start.sh
+실행 로그 저장	> log.txt 2>&1
+중지하고 싶을 때	kill 명령으로 프로세스 종료
+
+보통 db는 자동시작으로 설정되있다. 
+🔍 MySQL 자동 시작 여부 확인
+터미널에 아래 명령어 입력:
+
+bash
+복사
+편집
+sudo systemctl is-enabled mysql
+🔄 결과가 enabled 이면:
+MySQL은 인스턴스 재부팅 후에도 자동으로 켜져!
+
+🛠️ 만약 disabled 라면?
+아래 명령어로 자동 시작 설정해주면 돼:
+
+bash
+복사
+편집
+sudo systemctl enable mysql
+
+
+java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties
+외부파일 부분 빠지면 안된다. 
+
+
+
+ssh -i "spring-key.pem" ubuntu@ec2-3-145-180-219.us-east-2.compute.amazonaws.com
+
+ssh -i "spring-key.pem" ubuntu@ec2-3-133-120-249.us-east-2.compute.amazonaws.com
+
+pwd 현재 위치 ls 현재 위치 파일들. 
+http://3.133.120.249:8080/
+http://3.145.180.219:8080/
+
+
+------왜 안돼 또
+
+Spring Boot 프로젝트가 MySQL 데이터베이스에 접속을 시도할 때 발생한 문제입니다. 핵심 오류는 다음과 같습니다:
+
+Public Key Retrieval is not allowed
+
+이건 MySQL의 Caching SHA-2 Password 인증 방식을 사용할 때 자주 발생하는 에러입니다. 특히 mysql-connector-j 8.0 이상부터 이 방식이 기본이 되면서 많이 나타납니다.
+
+🔧 해결 방법
+Spring Boot의 application.properties 또는 application.yml 파일에 다음과 같은 설정을 추가하면 해결됩니다.
+
+✅ application.properties 사용하는 경우
+
+spring.datasource.url=jdbc:mysql://localhost:3306/game_db?allowPublicKeyRetrieval=true&useSSL=false
+
+
+
+http://3.133.120.249:8080/
+java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties
+이건 되는데 아래껀 안되네
+nohup java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties
+백그라운드 실행 이것도 됨. 
+
+
+nohup java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties > log.txt 2>&1 &
+이것도 되는데..?
+
+아 위에 경로가 이상했다. 
+
+
+nohup: 로그아웃해도 서버 유지
+
+> log.txt: 실행 로그를 log.txt에 저장
+
+2>&1: 에러 로그도 같이 저장
+
+&: 백그라운드 실행.
+
+ps aux | grep java
+Spring Boot 서버가 진짜로 실행 중인지 확인
+
+
+-----재부팅 후 자동 시작되는지-----
+코드 실행되면 웹서버 가동되는데 왜 재부팅 크론탭으로 설정한건 안되는거지.
+안됨...
+
+EC2는 Amazon Elastic Compute Cloud의 약자로, **AWS (Amazon Web Services)**에서 제공하는 가상 서버입니다. 쉽게 말하면, 클라우드에서 원하는 만큼 서버를 생성하고 운영할 수 있는 서비스입니다. 이 서버를 통해 다양한 애플리케이션을 실행하고, 웹사이트를 호스팅하거나, 데이터베이스 서버로 사용할 수 있습니다.
+
+EC2의 주요 특징:
+가상 서버: EC2는 실제 하드웨어가 아닌 가상 서버이기 때문에, 물리적 서버와 같은 개념으로 서버를 사용하되, 매우 유연하고 효율적입니다.
+
+유연한 크기와 성능: EC2는 다양한 크기와 성능의 인스턴스를 제공하므로, 사용자는 필요에 맞게 선택할 수 있습니다. 예를 들어, 작은 애플리케이션은 적은 리소스를 사용한 작은 인스턴스를 선택하고, 대규모 트래픽을 처리하는 서버는 더 강력한 인스턴스를 선택할 수 있습니다.
+
+비용 효율성: EC2는 사용한 만큼만 비용을 지불합니다. 예를 들어, 하루 중 일부 시간만 서버가 필요하다면, EC2를 중지하고 비용을 절감할 수 있습니다.
+
+자동 스케일링: 서버의 트래픽이나 필요에 따라 자동으로 인스턴스를 추가하거나 제거할 수 있습니다. 이를 통해 서비스가 필요한 만큼만 리소스를 사용할 수 있습니다.
+
+다양한 운영 체제: Linux, Windows, macOS 등 다양한 운영 체제를 선택할 수 있습니다. 애플리케이션에 맞는 OS를 선택하여 환경을 구축할 수 있습니다.
+
+보안 및 접근 관리: EC2는 VPC(Virtual Private Cloud)와 결합하여, 인스턴스를 안전하게 보호하고 네트워크와 액세스를 제어할 수 있습니다.
+
+사용 예시:
+웹 서버: EC2 인스턴스를 사용하여 웹 애플리케이션을 호스팅할 수 있습니다.
+
+데이터베이스 서버: MySQL, PostgreSQL 등의 데이터베이스 서버를 EC2에서 실행할 수 있습니다.
+
+개발/테스트 환경: 개발 중인 애플리케이션을 클라우드에서 테스트하거나 배포할 수 있습니다.
+
+EC2를 사용하는 이유:
+관리 편의성: 서버를 물리적으로 관리할 필요 없이, AWS에서 제공하는 도구들을 이용해 서버를 쉽고 빠르게 관리할 수 있습니다.
+
+탄력성: 서버 용량을 자동으로 확장하거나 축소할 수 있어 효율적으로 리소스를 사용할 수 있습니다.
+
+비용 최적화: 서버를 사용한 만큼만 비용을 지불하므로, 필요한 만큼만 자원을 사용할 수 있습니다.
+
+EC2 사용 흐름:
+AWS 콘솔에서 EC2 인스턴스를 생성합니다.
+
+운영체제를 선택하고, 필요한 리소스를 설정합니다 (CPU, 메모리, 저장소 등).
+
+애플리케이션을 설치하고 서버를 운영합니다.
+
+필요에 따라 서버를 중지하거나 종료할 수 있습니다.
+
+
+어쨌든 복원작업 완료. 
+
+이대로 끝내긴 아쉬우니 3가지만 보자. 
+
+1. 메인 1. 마우스 올리면 화면이 커지면서 확대되서 보이는 개간지 동작
+
+function bigimg3() {
+    big1.style.width = " calc((100% / 4))";
+    big2.style.width = " calc((100% / 4))";
+    big3.style.width = " calc((100% / 2))";
+    document.getElementById('bb3').style.opacity = '0';
+}
+
+function reBigbox() {
+    big1.style.width = " calc((100% / 3))";
+    big3.style.width = " calc((100% / 3))";
+    big2.style.width = " calc((100% / 3))";
+    document.getElementById('bb1').style.opacity = '1';
+    document.getElementById('bb2').style.opacity = '1';
+    document.getElementById('bb3').style.opacity = '1';
+}
+
+//마우스 올리면 화면 늘어나기
+big1.addEventListener('mouseenter', bigimg1);
+big2.addEventListener('mouseenter', bigimg2);
+big3.addEventListener('mouseenter', bigimg3);
+document.getElementById('img1').addEventListener('mouseenter', bigimg1);
+document.getElementById('img2').addEventListener('mouseenter', bigimg2);
+document.getElementById('img3').addEventListener('mouseenter', bigimg3);
+
+//마우스 때면 화면 초기화
+big1.addEventListener('mouseout', reBigbox);
+big2.addEventListener('mouseout', reBigbox);
+big3.addEventListener('mouseout', reBigbox);
+
+메인 2. 뒤에 배경이 움직임. 
+/* 서브 타이틀 */
+
+@keyframes slide {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 1000px 1000px;
+    }
+}
+
+.moveback {
+    animation: slide 15s linear infinite;
+}
+
+.moveback 클래스는 HTML 요소에 애니메이션을 적용하는 CSS 코드입니다. 이 스타일은 해당 요소에 slide라는 이름의 애니메이션을 15초간, 선형(linear) 속도로, 무한히 반복(infinite) 실행하도록 설정합니다.
+
+
+
+2. 회원가입할때 마리오가 위로 올라가면서 상자 치는거 (클릭 애니메이션)
+let box1_1 = document.getElementById("box1-1-1");
+
+let box1_1 = document.getElementById("box1-1-1"); 이건 객체를 새로 "만드는" 건 아니고,
+HTML 요소(객체)를 JavaScript 변수에 "가져와서 저장하는" 코드예요.
+
+box1_1.addEventListener("click", function() {
+  charImg1_1.classList.add("bounce"); // 캐릭터 이미지에 bounce 효과
+  setTimeout(function() {
+    window.location.href = "sign_main.html"; // 850ms 뒤 페이지 이동
+  }, 850);
+  box1_1.classList.add("bounceBox"); // 박스 자체에도 효과
+});
+
+3. 게임 구매 화면에서 자동으로 배너 바뀌는거.
+
+<div class="outer">                <!-- 가장 바깥의 컨테이너 -->
+    <div class="inner-list">      <!-- 여러 개의 배너들을 담는 리스트 -->
+        <div class="inner">       <!-- 각각의 배너를 감싸는 박스 -->
+            <div class="banner" id="banner1"></div> <!-- 배너 -->
+        </div>
+        ...
+    </div>
+</div>
+📌 각 요소 역할
+클래스/ID	역할 설명
+.outer	배너 전체를 감싸는 외곽 컨테이너 (보통 overflow: hidden 처리해서 슬라이드 효과 줌)
+.inner-list	여러 배너들을 가로로 나열한 리스트 (보통 display: flex;로 가로 정렬함)
+.inner	각각의 배너를 감싸는 박스
+.banner	실제로 보여지는 배너 영역 (이미지나 텍스트 등 배너 콘텐츠를 넣음)
+
+동적으로 div 사이즈 맞추기
+javascript
+복사
+편집
+inners.forEach((inner) => {
+  inner.style.width = `${outer.clientWidth}px`;
+});
+innerList.style.width = `${outer.clientWidth * inners.length}px`;
+outer의 너비에 맞춰서 모든 .inner의 width를 설정해주고,
+
+inner-list는 모든 .inner들을 가로로 나열할 수 있게 전체 길이(outer * 개수)를 지정합니다.
+
+👉 창 크기가 변해도 맞춰서 슬라이드가 잘 보이도록 설정한 거예요.
+
+ 2초마다 화면 넘기기
+javascript
+복사
+편집
+setInterval(() => {
+  // width 다시 계산 (리사이즈 대응용)
+  ...
+
+  // 다음 인덱스로 이동
+  currentIndex++;
+  currentIndex = currentIndex >= inners.length ? 0 : currentIndex;
+  innerList.style.marginLeft = `-${outer.clientWidth * currentIndex}px`;
+}, 2000);
+
+나의 말:
+/*
+div사이즈 동적으로 구하기
+*/
+const outer = document.querySelector('.outer');
+const innerList = document.querySelector('.inner-list');
+const inners = document.querySelectorAll('.inner');
+let currentIndex = 0; // 현재 슬라이드 화면 인덱스
+
+inners.forEach((inner) => {
+  inner.style.width = ${outer.clientWidth}px; // inner의 width를 모두 outer의 width로 만들기
+})
+
+innerList.style.width = ${outer.clientWidth * inners.length}px; // innerList의 width를 inner의 width * inner의 개수로 만들기
+
+/*
+  주기적으로 화면 넘기기
+*/
+const getInterval = () => {
+  return setInterval(() => {
+    inners.forEach((inner) => {
+      inner.style.width = ${outer.clientWidth}px; // inner의 width를 모두 outer의 width로 만들기
+    })
+
+    innerList.style.width = ${outer.clientWidth * inners.length}px; // innerList의 width를 inner의 width * inner의 개수로 만들기
+
+    currentIndex++;
+    currentIndex = currentIndex >= inners.length ? 0 : currentIndex;
+    innerList.style.marginLeft = -${outer.clientWidth * currentIndex}px;
+  }, 2000);
+}
+
+let interval = getInterval(); // interval 등록
+
+AWS 프리티어 EC2의 무료 조건
+EC2 t2.micro 또는 t3.micro 인스턴스 750시간/월 무료
+
+✅ 매월 750시간 한도 안에서는 무료!
+
+🕒 그럼 24시간 켜도 괜찮아?
+한 달 = 약 30일 x 24시간 = 720시간
+👉 즉, 한 대만 24시간 켜두면 프리티어 안에서 OK!
+
+하지만!
+
+EC2 인스턴스를 2대 이상 켜면 750시간을 초과할 수 있어요.
+
+추가적인 EBS 저장소, 데이터 송수신량(트래픽) 등이 무료 한도를 초과하면 과금될 수도 있어요.
+
+키파일있는 위치에서 
+ssh -i "spring-key.pem" ubuntu@ec2-3-20-199-113.us-east-2.compute.amazonaws.com
+로 aws접속
+서버를 껐다 켜면 스프링부트 서버와 db도 다시 켜줘야 한다. 
+자동으로 켜지게 하는것도 원래 설정하면 되는데... 왜 안될까?
+ **서버(예: Java/Spring Boot)**나 **DB(MySQL 등)
+
+nohup java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties > log.txt 2>&1 &
+
+> log.txt 2>&1	로그를 log.txt 파일로 저장
+>/dev/null 2>&1	로그를 버림 (기록 X, 성능↑)
+
+nohup java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties >/dev/null 2>&1 &
+sudo systemctl start mysql
+그리고 상태 확인은:
+sudo systemctl status mysql
+
+홈페이지 접속
+http://3.20.199.113:8080/
+
+포트폴리오용 로그인 테스트 
+testuser 
+test1234!
+
+aws에 있는건 게임 소프트웨어 구매화면에서 클릭해도 안뜨네. 
+캐릭터 소개 화면은 완전 개판났고. 
+
+로그인 실패시 팝업 띄우기. 
+
+네비게이션 터치가능한 부분은 굵게.
+
+메인이랑 젤다 부분에서 위에 하얀부분 
+
+컨트롤러의 주요 역할 3가지
+1. HTML 템플릿 반환 (뷰 렌더링)
+가장 흔한 사용: 페이지 이동
+
+java
+복사
+편집
+@GetMapping("/login")
+public String loginPage() {
+    return "login";  // templates/login.html 렌더링
+}
+2. 데이터 처리 (API 역할)
+예: 프론트에서 AJAX 요청 → JSON 데이터 응답
+
+java
+복사
+편집
+@RestController
+@RequestMapping("/api")
+public class UserApiController {
+
+    @GetMapping("/users")
+    public List<User> getUsers() {
+        return userRepository.findAll();  // JSON으로 반환
+    }
+}
+@RestController는 HTML 말고 JSON 반환용 컨트롤러야!
+
+3. 폼 제출 처리 (POST 요청 처리 등)
+예: 로그인, 회원가입 폼 처리
+
+java
+복사
+편집
+@PostMapping("/login")
+public String doLogin(@RequestParam String username, @RequestParam String password) {
+    // 로그인 로직 처리 후...
+    return "redirect:/home";  // 성공 시 페이지 이동
+}
+💡 참고로
+
+사용 방식	설명
+@Controller	HTML 템플릿 반환용 (뷰 이름 반환)
+@RestController	JSON 데이터 반환용 (API 용도)
+
+nohup java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties > log_$(date +%F).txt 2>&1 &
+
+aws가 접속이 안되는 현상 발생. 
+재부팅도 안되서 이틀만에 인스턴스 다시 켰음. 
+로그 확인. 
+
+좋아, 이 로그는 Spring Boot 서버 실행 중에 발생한 경고(WARN) 메시지야. 간단히 설명하면:
+
+HikariPool-1 - Thread starvation or clock leap detected
+이 뜻은:
+
+HikariCP (Spring Boot에서 사용하는 커넥션 풀 라이브러리) 내부에서
+
+예상보다 시간이 비정상적으로 많이 지연되었음을 감지했다는 것.
+
+구체적으로:
+
+housekeeper라는 HikariCP의 백그라운드 스레드가 주기적으로 작동하면서 커넥션 상태를 체크하는데,
+
+그 주기가 1분(m)이면 대략 60초마다 돌아야 해.
+
+그런데 delta=1m13s428ms 같은 식으로 73초나 걸렸어. (13초 추가 지연)
+
+또는 delta=50s705ms 라고 50초 이상 걸렸다고 나오기도 했지.
+
+이 현상의 주요 원인은:
+
+Thread starvation: CPU를 사용할 수 있는 스레드가 부족함. (서버 과부하, GC 문제 등)
+
+Clock leap: 시스템 시간이 갑자기 튀었음. (가끔 서버 시간 동기화(NTP) 문제)
+
+요약
+서버가 CPU를 너무 많이 사용하고 있거나
+
+서버 시스템 시간이 비정상적으로 변경되었거나
+
+GC(가비지 컬렉션) 같은 시스템 멈춤(pause)이 발생했을 가능성이 있어.
+
+해결 방법 (상황에 따라)
+서버의 CPU 사용량 확인하기 (top, htop, Task Manager 등)
+
+메모리 부족이나 GC 튜닝 확인
+
+커넥션 풀 사이즈를 조정해서 너무 많은 커넥션을 잡지 않게 하기
+
+서버 시간 동기화 점검 (ntp, timedatectl)
+
+전체 서버 상태를 모니터링해서 병목이 생기는지 체크
+
+오케이, 설명해줘서 고마워.
+정리하면 상황이 이렇게야:
+
+EC2 t2.micro → CPU 1코어, RAM 1GB → 굉장히 작은 사양
+
+Spring 서버 하나만 돌리고 있었지만
+
+서버가 엄청 렉 걸렸고 → 재부팅도 안 될 정도로 먹통
+
+이틀 지나서 겨우 다시 켰음
+
+그래서 지금 HikariCP가
+"야, 집안 돌보는 스레드가 너무 오래 멈췄어!!"
+하고 경고를 뿜는 거야.
+
+원인 거의 확정
+✅ t2.micro는 리소스가 너무 적어서
+✅ Spring Boot 서버 구동 자체로도 부담이 크고
+✅ 특히 메모리 부족 + CPU 크레딧 소진 문제가 터졌을 가능성이 매우 높아.
+
+AWS에서 t2, t3 시리즈는 "CPU 크레딧"이라는 개념이 있는데,
+일정 시간 CPU를 막 쓰면 → 크레딧이 바닥나면서 속도가 거의 0이 돼.
+그러면 렉, 다운, 재부팅 실패가 다 나올 수 있어.
+
+결론적으로
+서버가 심각하게 느려진 상태에서 Spring 서버는 살아있긴 했는데,
+
+내부 스레드들 (housekeeper 같은)이 시간 체크를 못해서 경고만 찍힌 거야.
+
+= 서버 문제지, 너 코드 문제는 아님.
+
+그래서 어떻게 해야 할까?
+간단 대응
+지금은 서버가 다시 살아났으니까, 당장은 신경 안 써도 됨.
+
+하지만 서버가 다시 느려질 확률이 높아.
+
+장기 대응
+EC2 인스턴스 업그레이드 (t3.small 이상 추천)
+
+CPU 2개, RAM 2GB 이상이면 안정성 확 올라감
+
+Spring 서버 최적화
+
+필요 없는 의존성 제거
+
+서버 시작 시 너무 무거운 작업 피하기
+
+CloudWatch로 모니터링 켜기
+
+CPU 사용률, 메모리 사용률 알림 설정해두기
+
+RDS나 외부 DB 연결 시에도 커넥션 풀 사이즈 줄이기
+
+(application.properties에서 spring.datasource.hikari.maximum-pool-size=5 같은 설정)
+
+일단 로그를 빼고 최대한 서버 부하를 줄여보겠음. 
+재부팅도 자주해주면 최대한 부하를 줄일수 있겠지.
+
+
+
+현재 돌아가는 프로세스 죽이고 다시 깔끔하게 실행하는 방법도 같이 알려줄게!
+할까? ✨ (ps, kill, 재실행까지 1분컷 가능)
+
+
+
+
+
+
+
+나의 말:
+알려줘
+
+
+ChatGPT의 말:
+좋아, 이제 현재 돌아가는 프로세스를 종료하고 깔끔하게 다시 실행하는 방법을 알려줄게!
+
+1. 현재 실행 중인 Java 프로세스 확인하기
+먼저, 현재 Java 애플리케이션이 실행 중인 프로세스를 확인해야 해.
+터미널에서 다음 명령어를 입력:
+
+bash
+복사
+편집
+ps aux | grep demo-0.0.1-SNAPSHOT.jar
+ps aux는 현재 실행 중인 모든 프로세스를 표시하고,
+
+grep demo-0.0.1-SNAPSHOT.jar는 그 중에서 네가 실행 중인 demo-0.0.1-SNAPSHOT.jar 를 찾는 거야.
+
+결과는 이런 형식으로 나오게 돼:
+
+arduino
+복사
+편집
+ubuntu  12345  0.1  0.5 123456 7890 ?        S    14:30   0:00 java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties
+여기서 12345는 **프로세스 ID(PID)**야. 이걸로 프로세스를 종료할 수 있어.
+
+2. 실행 중인 프로세스 종료하기
+다음 명령어로 프로세스를 종료할 수 있어:
+
+bash
+복사
+편집
+kill 12345
+**12345**는 방금 확인한 프로세스 ID야.
+
+kill은 지정된 프로세스를 종료시키는 명령어야.
+
+만약 종료가 안 된다면, 강제로 종료하려면:
+
+bash
+복사
+편집
+kill -9 12345
+-9 옵션은 강제 종료 옵션이야. (강제로 종료할 때 사용)
+
+3. 다시 실행하기
+이제 로그 없이 다시 서버를 실행해보자:
+
+bash
+복사
+편집
+nohup java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties >/dev/null 2>&1 &
+이 명령어는 백그라운드에서 애플리케이션을 실행하면서, 로그를 저장하지 않고 버린다는 설정이야.
+
+4. 실행 확인
+서버가 잘 돌아가는지 확인하려면:
+
+bash
+복사
+편집
+ps aux | grep demo-0.0.1-SNAPSHOT.jar
+또는 로그 없이 실행하고 있으면,
+nohup.out 파일이 있다면, 그 파일을 확인할 수 있어:
+
+bash
+복사
+편집
+tail -f nohup.out
+이 명령어는 로그 파일의 마지막 부분을 실시간으로 보여줘.
+
+요약
+현재 실행 중인 프로세스 확인 → ps aux | grep demo-0.0.1-SNAPSHOT.jar
+
+프로세스 종료 → kill 12345 또는 kill -9 12345
+
+백그라운드에서 서버 실행 → nohup java -jar demo-0.0.1-SNAPSHOT.jar >/dev/null 2>&1 &
+
+실행 확인 → ps aux | grep demo-0.0.1-SNAPSHOT.jar
+
+이제 서버를 깔끔하게 다시 실행할 수 있어! 🎉
