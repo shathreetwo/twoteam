@@ -2,7 +2,7 @@
 기존 실행중인 jar 서비스 종료
 ps -ef | grep java
 pid 확인하고 
-ps -ef | grep java
+kill -9 12345
 프로세스 종료
 rm demo-0.0.1-SNAPSHOT.jar
 기존 jar 제거
@@ -19,6 +19,8 @@ jar파일 받으면
 nohup java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties > log_$(date +%F).txt 2>&1 &
 jar 서비스 실행
 
+nohup java -jar demo-0.0.1-SNAPSHOT.jar --spring.config.location=file:/home/ubuntu/application-aws.properties >/dev/null 2>&1 &
+로그 버리기
 
 구성 | 설명
 nohup | 터미널을 종료해도 프로세스가 계속 실행되게 함

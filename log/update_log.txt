@@ -3,3 +3,9 @@
 - saleDetail1~9.html의 CSS, JS 경로 대소문자 수정
 - AWS 배포 후 레이아웃 축소 현상 수정
 - 디자인 깨짐 이슈 확인 및 반영
+
+[Version 4]
+- 보안조치
+
+[Version 5]
+- 사이트로고 변경. dintedo 
